@@ -39,7 +39,7 @@ def get_worked_example() -> str:
     return path.read_text(encoding="utf-8") if path.exists() else "Worked example not found."
 
 @mcp.prompt()
-def analyze_finances() -> str:
+def analyzeFinances() -> str:
     """
     Prompt template to analyze startup finances like an expert CFO.
     """
@@ -47,13 +47,13 @@ def analyze_finances() -> str:
 A user wants you to analyze their financial data.
 Your process:
 1. Ask the user for their financial data (bank CSV, Stripe export, or simple numbers like monthly_opex, monthly_revenue).
-2. If the user provides data, use the `compute_financial_metrics` tool to process it.
+2. If the user provides data, use the `computeFinancialMetrics` tool to process it.
 3. Read the `file://references/coaching_templates.md` resource to understand how to provide industry-specific advice based on the metrics.
-4. Finally, use the `generate_financial_report` tool to create a clear markdown report for the user, and append your expert coaching advice below it.
-Always rely on the `compute_financial_metrics` tool rather than doing math yourself. If data is insufficient, tell the user exactly what missing inputs are needed.'''
+4. Finally, use the `generateFinancialReport` tool to create a clear markdown report for the user, and append your expert coaching advice below it.
+Always rely on the `computeFinancialMetrics` tool rather than doing math yourself. If data is insufficient, tell the user exactly what missing inputs are needed.'''
 
 @mcp.tool()
-def compute_financial_metrics(inputs_json: str) -> str:
+def computeFinancialMetrics(inputs_json: str) -> str:
     """
     Computes startup financial metrics (runway, gross margin, cac, ltv, etc.) from raw data.
     
@@ -74,12 +74,12 @@ def compute_financial_metrics(inputs_json: str) -> str:
     return json.dumps(result, indent=2)
 
 @mcp.tool()
-def generate_financial_report(metrics_json: str, format: str = "markdown") -> str:
+def generateFinancialReport(metrics_json: str, format: str = "markdown") -> str:
     """
     Renders a human-readable financial report based on the computed metrics.
     
     Args:
-        metrics_json: The JSON string output from `compute_financial_metrics`.
+        metrics_json: The JSON string output from `computeFinancialMetrics`.
         format: "markdown" or "html". Default is "markdown".
     Returns:
         The formatted financial report as a string.

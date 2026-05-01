@@ -1,13 +1,12 @@
 # Startup Finance Metrics (MCP Server)
 
-[![smithery badge](https://smithery.ai/badge/@MayankTalwar0/startup-finance-metrics)](https://smithery.ai/server/@MayankTalwar0/startup-finance-metrics)
-
 An MCP (Model Context Protocol) server for analyzing startup financial health and generating metrics reports locally.
 
 > **🔒 PRIVACY & SECURITY FIRST:**
 > - **Zero Cloud Risk**: This tool runs 100% locally on your machine/server.
 > - **No Data Sent Externally**: Financial data is **NEVER** sent to any external API, cloud provider, or third-party service (including SlickBooks).
 > - **No Data Storage**: The server processes inputs in-memory and returns the metrics directly to the MCP client. No data is stored, cached, or logged.
+> - **Strictly Read-Only**: This server executes NO financial state changes. It is a strictly read-only mathematical engine.
 > - **Strictly Local Processing**: Safely integrates with Claude Desktop, Cursor, Glama, and other MCP clients while maintaining full data sovereignty over your sensitive financial inputs.
 
 ## What It Does
@@ -19,9 +18,33 @@ An MCP (Model Context Protocol) server for analyzing startup financial health an
 
 ## Setup & Installation
 
-### Option 1: Claude Desktop (via uv)
+### Option 1: Automated Installation (Claude Desktop, Cursor, Windsurf)
 
-If you have `uv` installed, you can add this directly to your `claude_desktop_config.json`:
+If you have Node.js installed on your computer, you can use the Smithery CLI to automatically inject the configuration for you:
+
+```bash
+npx -y @smithery/cli install @MayankTalwar0/startup-finance-metrics --client claude
+```
+*(Note: You can change `--client claude` to `--client cursor` or `--client windsurf` depending on your app).*
+
+### Option 2: Claude Desktop (Manual Installation for Non-Developers)
+
+Since this tool runs entirely on your own machine to protect your financial data, it requires a one-time manual setup. 
+**Good News:** You do **NOT** need to have Python installed! The tool we use below (`uv`) will automatically download everything it needs invisibly in the background.
+
+**Step 1: Install `uv`**
+This server uses `uv` (a fast Python manager) to run locally. If you don't have it installed:
+- **Mac/Linux**: Open your Terminal and run: `curl -LsSf https://astral.sh/uv/install.sh | sh`
+- **Windows**: Open PowerShell and run: `powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"`
+
+**Step 2: Open Claude's Configuration**
+1. Open the Claude Desktop App.
+2. In the top left menu, click **Claude** -> **Settings** (or Preferences).
+3. Click on the **Developer** tab in the left sidebar.
+4. Click the **Edit Config** button. This will open a file named `claude_desktop_config.json` in your default text editor.
+
+**Step 3: Add the Server**
+Replace the contents of that file with the following code (if you already have other servers, just add the `startup-finance-metrics` block inside your existing `mcpServers`):
 
 ```json
 {
@@ -38,14 +61,24 @@ If you have `uv` installed, you can add this directly to your `claude_desktop_co
 }
 ```
 
-### Option 2: Glama / Cursor (npx/uvx)
+**Step 4: Restart Claude**
+Save the file, close it, and completely restart Claude Desktop. You will now see a new "hammer" (Tools) icon in your Claude chats!
 
-For clients like Glama or Cursor that support quick execution, configure your MCP integration with:
+### Option 3: Claude Code, Glama, or Custom Cursor setup
+
+For CLI agents like Claude Code, or if you prefer to manually configure Glama and Cursor, use the `uvx` command:
+
+**For Claude Code:**
+```bash
+claude mcp add startup-finance -- uvx --from git+https://github.com/MayankTalwar0/startup-finance-metrics.git startup-finance-mcp
+```
+
+**For Glama / Cursor (Custom MCP config):**
 ```bash
 uvx --from git+https://github.com/MayankTalwar0/startup-finance-metrics.git startup-finance-mcp
 ```
 
-### Option 3: Local Development
+### Option 4: Local Development
 
 ```bash
 git clone https://github.com/MayankTalwar0/startup-finance-metrics.git
@@ -60,9 +93,9 @@ startup-finance-mcp
 
 This server provides the following tools to the MCP client:
 
-1. `compute_financial_metrics(inputs_json: str)`: 
+1. `computeFinancialMetrics(inputs_json: str)`: 
    Computes startup financial metrics (runway, gross margin, cac, ltv, etc.) from raw data. Accepts a JSON string containing financial inputs or a raw `bank_csv` string.
-2. `generate_financial_report(metrics_json: str, format: str)`: 
+2. `generateFinancialReport(metrics_json: str, format: str)`: 
    Renders a human-readable financial report based on the computed metrics. Format can be `markdown` (default) or `html`.
 
 ## Using as a Standalone AI Skill
