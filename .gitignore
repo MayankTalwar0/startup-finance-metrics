@@ -10,6 +10,12 @@ env/
 venv/
 ENV/
 
+# Distribution / Packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
 # Output files
 financial_report.html
 financial_report.md
@@ -22,3 +28,6 @@ metrics_data.json
 # OS files
 .DS_Store
 Thumbs.db
+
+# Local
+local/
