@@ -11,7 +11,7 @@ An MCP (Model Context Protocol) server for analyzing startup financial health an
 
 ## What It Does
 
-1. **Ingests Data**: Accepts bank CSVs, Stripe export CSVs, QBO/Xero export CSVs, or pasted values.
+1. **Ingests Data**: Accepts bank CSVs, Stripe export CSVs, QBO/Xero export CSVs, or pasted values. *(For best results, provide a minimum 3-month bank statement and active user stats. Sample files are available in the `test/` folder).*
 2. **Computes Key Metrics**: Calculates Net Burn, Runway, Gross Margin, CAC, LTV, Rule of 40, and more.
 3. **Strict Validation**: Returns `insufficient_data` with `missing_inputs` instead of hallucinating values.
 4. **Generates Reports**: Creates clean, formatted markdown and HTML summaries of the analysis.

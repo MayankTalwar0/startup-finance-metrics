@@ -6,7 +6,7 @@ description: >
   metrics first, then adds a short industry section (SaaS, e-commerce,
   services, freelancer/consulting) when enough data exists.
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
   author: "SlickBooks"
   tags: ["finance", "startup", "small-business", "cash-flow", "profitability"]
   license: "MIT"
@@ -43,7 +43,11 @@ Designed for: SaaS, e-commerce, agencies/services, professional practices, freel
 
 Ask this first if not provided:
 
-- Business type: `saas`, `ecommerce`, `services`, `freelancer`, `professional_practice`, or `other`
+- **Business type**: `saas`, `ecommerce`, `services`, `freelancer`, `professional_practice`, or `other`. If the user does not state it, infer from data and assign a confidence. If confidence is below ~80% (conflicting or weak signals), STOP and ask the user to confirm — and tell them specifically why you were uncertain. Only proceed silently when confidence is high; even then, state your inference and the signals briefly.
+- **Business website** (optional): for product/service context to improve categorization
+- **About the business** (optional): brief description of what they sell and who they serve
+- **Financial data** (required): bank statement CSV, Stripe export, or pasted figures
+- **Customer metrics** (optional): customer counts, churn rates, new/lost customers
 - Analysis period: default to latest completed calendar month
 - Data coverage: ask for 3 months minimum for trends, 13 months preferred for YoY metrics
 
@@ -54,10 +58,32 @@ Ask this first if not provided:
    - Net Cash Flow, Cash Balance, Runway (if burning)
    - Revenue Growth (if prior period exists)
 2. Compute the 12 advanced investor metrics only when required fields exist.
-3. Never invent values. Missing inputs must return:
+3. Compute 2-3 industry-specific metrics when `business_type` is provided.
+4. Never invent values. Missing inputs must return:
    - `label: insufficient_data`
    - `reason: Cannot be determined from the provided inputs.`
    - `missing_inputs: [...]`
+5. When a metric is mathematically meaningless because the business is cash flow positive (e.g., Cash Runway, Burn Multiple when net burn ≤ 0), return:
+   - `label: not_applicable`
+   - `reason: Business is cash flow positive`
+6. For multi-month input, call `computeFinancialMetrics` once per month, then call `generateFinancialReport` ONCE with a multi-month payload (`{"months": [...]}`). Produce a single unified report — never one file per month.
+
+## Transaction Categorization Rules
+
+When processing bank statements, the agent MAY use its judgment to categorize
+transactions based on descriptions and business context:
+
+- "AWS Cloud Hosting" → COGS (for SaaS)
+- "Google Ads" → Sales & Marketing
+- "Payroll" → Payroll expense
+- "Stripe fees" → COGS (payment processing)
+
+### Categorization Guardrails
+
+1. **NEVER assume a percentage.** Do NOT say "COGS is ~15% of revenue". Every number must trace to a specific transaction line item.
+2. **NEVER hardcode or invent numerical values.** If no transactions match a category, pass `null`.
+3. **Categorization IS allowed.** Assigning a transaction to a category based on its description is not invention — it is classification.
+4. **When uncertain**, return `null`. It is better to return `insufficient_data` than to fabricate a number.
 
 ## Minimum Inputs For All 12 Advanced Metrics
 
@@ -84,16 +110,16 @@ Ask for these fields when user wants the full 12-metric output:
 ## Industry Add-On Metrics (2-3 only)
 
 - `saas`: MRR/ARR, churn/NRR, CAC payback or LTV:CAC
-- `ecommerce`: gross margin, AOV, ad-spend ratio or refund ratio
-- `services`: revenue per client, payroll ratio, client concentration
-- `freelancer` / `professional_practice`: income stability, expense ratio, runway
+- `ecommerce`: AOV (requires `total_orders`), ad-spend ratio, refund rate (requires `refund_amount`)
+- `services`: revenue per client, payroll ratio (requires `payroll_spend`), client concentration (requires `top_client_revenue`)
+- `freelancer` / `professional_practice`: expense ratio, effective hourly rate (requires `billable_hours`), runway
 - `other`: common metrics only until business model is clarified
 
 ## Computation Runtime
 
-- Use `scripts/compute_metrics.py` for metric computation.
-- Use `scripts/render_report.py` to generate both report formats from `metrics_data.json`.
-- If a `bank_csv` text blob is provided in JSON input, script normalizes it automatically.
+- Use `computeFinancialMetrics` tool for metric computation.
+- Use `generateFinancialReport` tool to generate both report formats and save to disk.
+- If a `bank_csv` text blob is provided in JSON input, script normalizes it automatically (basic totals only — prefer pre-categorized inputs).
 - Keep parsing conservative; if a field is not reliably derivable, mark missing.
 
 ## Period Rules
@@ -110,12 +136,16 @@ Ask for these fields when user wants the full 12-metric output:
 
 ## Output Contract
 
-Always produce:
+Always produce ONE unified report covering the full period the user supplied:
 
 1. Inline metrics summary with label for each metric.
-2. `financial_report.html` as the primary human-readable report.
-3. `financial_report.md` as a fallback/plain-text version.
+2. `financial_report.html` — single unified report covering all months (saved to disk).
+3. `financial_report.md` — plain-text fallback of the same unified report (saved to disk).
 4. `metrics_data.json` with values, labels, and missing inputs.
+5. AI categorization disclaimer when transaction descriptions were used for classification.
+6. Industry confidence + reasoning visible in the report header.
+
+Do NOT produce per-month report files (e.g., `march_report.md`, `april_report.md`).
 
 Optional:
 

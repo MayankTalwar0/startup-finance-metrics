@@ -27,6 +27,16 @@ Run these checks before metric computation. If a check fails, ask for clarificat
 - Use a monthly P&L export, not annual aggregate only.
 - If combining with bank data, note basis differences in the report.
 
+## Transaction Categorization
+
+When the agent categorizes bank transactions to derive metric inputs:
+
+- **Allowed:** Assigning "AWS Cloud Hosting" to COGS, "Google Ads" to S&M based on description.
+- **Forbidden:** Assuming "COGS = 15% of revenue" or any percentage-based estimate.
+- **Forbidden:** Hardcoding any numerical value that does not trace to a specific line item.
+- **Required:** If no transactions match a category, pass `null` for that input.
+- **Required:** Include AI categorization disclaimer in all reports using categorized data.
+
 ## Edge-Case Guardrails
 
 - Revenue growth is insufficient when prior-period revenue is missing or <= 0.
@@ -34,3 +44,5 @@ Run these checks before metric computation. If a check fails, ask for clarificat
 - CAC is insufficient when new customers <= 0.
 - NRR is insufficient when starting MRR is missing or <= 0.
 - Runway is insufficient when net burn is missing or non-positive.
+- Internal transfers between own accounts must be excluded from revenue and expenses.
+- Refunds must be subtracted from revenue, not added to expenses.

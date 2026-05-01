@@ -1,0 +1,6 @@
+Metric,March,April,May
+Total Customers (end of month),142,158,172
+New Customers added (during month),18,16,14
+Churned Customers,8,5,4
+Gross Churn Rate (customer count),5.60%,3.20%,2.40%
+Revenue Churn Rate (MRR basis),4.80%,2.90%,2.10%

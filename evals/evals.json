@@ -3,21 +3,33 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "Business type is services. Here is one month: cash 180000, revenue 95000, opex 78000, cogs 12000, previous month revenue 90000. Give me health metrics.",
-      "expected_output": "Common metrics computed and SaaS-only metrics marked insufficient_data with missing_inputs.",
+      "prompt": "Business type is services. Here is one month: cash 180000, revenue 95000, opex 78000, cogs 12000, previous month revenue 90000, payroll_spend 45000, active_customers 15, top_client_revenue 28000. Give me health metrics.",
+      "expected_output": "Common metrics computed. Industry metrics include revenue_per_client, payroll_ratio (47.4%), client_concentration (29.5%). SaaS-only metrics (NRR, churn) marked insufficient_data with missing_inputs.",
       "files": []
     },
     {
       "id": 2,
       "prompt": "Business type is SaaS. Cash 1200000, revenue 60000, opex 180000, cogs 15000, prev month revenue 52000, S&M 40000, new customers 8, active customers 120, lost customers 3, starting_mrr 58000, churned_mrr 1500, expansion_mrr 2400, contraction_mrr 300, arr_start 650000, arr_end 720000, revenue_growth_yoy_pct 140, operating_margin_pct -180.",
-      "expected_output": "All advanced metrics computed with labels and no invented values.",
+      "expected_output": "All 12 advanced metrics computed with labels and no invented values. Industry metrics include MRR (60000) and ARR (720000).",
       "files": []
     },
     {
       "id": 3,
       "prompt": "I uploaded only a bank CSV from one month and did not provide business type.",
-      "expected_output": "Parser-derived common metrics + request for business type + insufficient_data for non-derivable advanced metrics.",
+      "expected_output": "Agent asks for business type (optional), website (optional), and about business (optional). Parser-derived common metrics computed. Advanced metrics requiring cogs, S&M spend, customer data returned as insufficient_data. No industry metrics computed (business_type=other). Agent notes that providing industry context would improve accuracy.",
       "files": ["one_month_bank.csv"]
+    },
+    {
+      "id": 4,
+      "prompt": "Business type is SaaS. Here is my bank CSV with 3 months of data. Website: app.example.com. We sell project management SaaS to small teams.",
+      "expected_output": "Agent categorizes transactions using descriptions (e.g., AWS→COGS, Google Ads→S&M). Agent does NOT assume any percentages (no 'COGS ~ 15% of revenue'). Uncategorizable items pass null. Both financial_report.html and financial_report.md are saved to disk. AI categorization disclaimer is included.",
+      "files": ["three_month_bank.csv"]
+    },
+    {
+      "id": 5,
+      "prompt": "Business type is ecommerce. Cash 50000, revenue 120000, opex 95000, cogs 48000, sales_marketing_spend 22000, total_orders 850, refund_amount 3600, prev_monthly_revenue 105000.",
+      "expected_output": "Common metrics computed. Industry metrics include AOV ($141.18), ad_spend_ratio (18.3%), refund_rate (3.0%). Both report files generated.",
+      "files": []
     }
   ]
 }

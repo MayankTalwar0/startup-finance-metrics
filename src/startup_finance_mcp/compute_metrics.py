@@ -125,6 +125,32 @@ def verdict(metric_name, value):
             (5, 15, "adequate", "5-15%"),
             (-inf, 5, "weak", "< 5%"),
         ],
+        # Industry-specific benchmarks
+        "ecom_ad_spend_ratio": [
+            (0, 15, "strong", "< 15% of revenue"),
+            (15, 30, "adequate", "15-30% of revenue"),
+            (30, inf, "weak", "> 30% of revenue"),
+        ],
+        "ecom_refund_rate": [
+            (0, 2, "strong", "< 2%"),
+            (2, 5, "adequate", "2-5%"),
+            (5, inf, "weak", "> 5%"),
+        ],
+        "svc_payroll_ratio": [
+            (0, 50, "strong", "< 50% of revenue"),
+            (50, 70, "adequate", "50-70% of revenue"),
+            (70, inf, "weak", "> 70% of revenue"),
+        ],
+        "svc_client_concentration": [
+            (0, 25, "strong", "< 25% from top client"),
+            (25, 50, "adequate", "25-50% from top client"),
+            (50, inf, "weak", "> 50% from top client"),
+        ],
+        "fp_expense_ratio": [
+            (0, 50, "strong", "< 50% of revenue"),
+            (50, 75, "adequate", "50-75% of revenue"),
+            (75, inf, "weak", "> 75% of revenue"),
+        ],
     }
     for lo, hi, label, reason in rules.get(metric_name, []):
         if lo <= value < hi:
@@ -187,12 +213,17 @@ def compute_all(raw_inputs):
     if net_burn is None:
         runway_missing.append("monthly_opex/monthly_revenue (for net_burn)")
         runway = None
+        metrics["2_runway"] = _metric("runway", runway, runway_missing, "runway")
     elif net_burn <= 0:
-        runway = None
-        runway_missing.append("positive_net_burn")
+        metrics["2_runway"] = {
+            "value": None,
+            "label": "not_applicable",
+            "reason": "Business is cash flow positive",
+            "missing_inputs": [],
+        }
     else:
         runway = v["current_cash"] / net_burn
-    metrics["2_runway"] = _metric("runway", runway, runway_missing, "runway")
+        metrics["2_runway"] = _metric("runway", runway, runway_missing, "runway")
 
     missing, v = _required(inputs, ["monthly_revenue", "cogs"])
     gm = (
@@ -265,14 +296,22 @@ def compute_all(raw_inputs):
     bm_missing = list(missing)
     if net_burn is None:
         bm_missing.append("monthly_opex/monthly_revenue (for net_burn)")
-    burn_multiple = None
-    if not bm_missing:
-        net_new_arr = v["arr_end"] - v["arr_start"]
-        if net_new_arr <= 0:
-            bm_missing = ["arr_end must be > arr_start"]
-        else:
-            burn_multiple = net_burn / net_new_arr
-    metrics["9_burn_multiple"] = _metric("burn_multiple", burn_multiple, bm_missing, "burn_multiple")
+    if not bm_missing and net_burn is not None and net_burn <= 0:
+        metrics["9_burn_multiple"] = {
+            "value": None,
+            "label": "not_applicable",
+            "reason": "Business is cash flow positive",
+            "missing_inputs": [],
+        }
+    else:
+        burn_multiple = None
+        if not bm_missing:
+            net_new_arr = v["arr_end"] - v["arr_start"]
+            if net_new_arr <= 0:
+                bm_missing = ["arr_end must be > arr_start"]
+            else:
+                burn_multiple = net_burn / net_new_arr
+        metrics["9_burn_multiple"] = _metric("burn_multiple", burn_multiple, bm_missing, "burn_multiple")
 
     missing, v = _required(inputs, ["starting_mrr", "expansion_mrr", "churned_mrr", "contraction_mrr"])
     nrr = (
@@ -313,10 +352,120 @@ def compute_all(raw_inputs):
                 payback = metrics["4_cac"]["value"] / monthly_gross_profit
     metrics["12_cac_payback"] = _metric("cac_payback", payback, payback_missing, "cac_payback")
 
+    # ── Industry-specific metrics ──────────────────────────────────────────
+    business_type = str(inputs.get("business_type", "other")).lower().strip()
+    industry_metrics = {}
+
+    if business_type == "saas":
+        mr_val = _to_number(inputs.get("monthly_revenue"))
+        if mr_val is not None:
+            industry_metrics["ind_mrr"] = _metric("ind_mrr", mr_val, [])
+            industry_metrics["ind_arr"] = _metric("ind_arr", mr_val * 12, [])
+        else:
+            industry_metrics["ind_mrr"] = _metric("ind_mrr", None, ["monthly_revenue"])
+            industry_metrics["ind_arr"] = _metric("ind_arr", None, ["monthly_revenue"])
+
+    elif business_type == "ecommerce":
+        # AOV
+        missing_aov, v_aov = _required(inputs, ["monthly_revenue", "total_orders"])
+        aov = None
+        if not missing_aov:
+            if v_aov["total_orders"] <= 0:
+                missing_aov = ["total_orders must be > 0"]
+            else:
+                aov = v_aov["monthly_revenue"] / v_aov["total_orders"]
+        industry_metrics["ind_aov"] = _metric("ind_aov", aov, missing_aov)
+
+        # Ad Spend Ratio
+        missing_ad, v_ad = _required(inputs, ["sales_marketing_spend", "monthly_revenue"])
+        ad_ratio = None
+        if not missing_ad:
+            if v_ad["monthly_revenue"] <= 0:
+                missing_ad = ["monthly_revenue must be > 0"]
+            else:
+                ad_ratio = (v_ad["sales_marketing_spend"] / v_ad["monthly_revenue"]) * 100
+        industry_metrics["ind_ad_spend_ratio"] = _metric(
+            "ecom_ad_spend_ratio", ad_ratio, missing_ad, "ecom_ad_spend_ratio"
+        )
+
+        # Refund Rate
+        missing_ref, v_ref = _required(inputs, ["refund_amount", "monthly_revenue"])
+        refund_rate = None
+        if not missing_ref:
+            if v_ref["monthly_revenue"] <= 0:
+                missing_ref = ["monthly_revenue must be > 0"]
+            else:
+                refund_rate = (v_ref["refund_amount"] / v_ref["monthly_revenue"]) * 100
+        industry_metrics["ind_refund_rate"] = _metric(
+            "ecom_refund_rate", refund_rate, missing_ref, "ecom_refund_rate"
+        )
+
+    elif business_type == "services":
+        # Revenue per client
+        missing_rpc, v_rpc = _required(inputs, ["monthly_revenue", "active_customers"])
+        rpc = None
+        if not missing_rpc:
+            if v_rpc["active_customers"] <= 0:
+                missing_rpc = ["active_customers must be > 0"]
+            else:
+                rpc = v_rpc["monthly_revenue"] / v_rpc["active_customers"]
+        industry_metrics["ind_revenue_per_client"] = _metric("ind_revenue_per_client", rpc, missing_rpc)
+
+        # Payroll ratio
+        missing_pr, v_pr = _required(inputs, ["payroll_spend", "monthly_revenue"])
+        pr = None
+        if not missing_pr:
+            if v_pr["monthly_revenue"] <= 0:
+                missing_pr = ["monthly_revenue must be > 0"]
+            else:
+                pr = (v_pr["payroll_spend"] / v_pr["monthly_revenue"]) * 100
+        industry_metrics["ind_payroll_ratio"] = _metric(
+            "svc_payroll_ratio", pr, missing_pr, "svc_payroll_ratio"
+        )
+
+        # Client concentration
+        missing_cc, v_cc = _required(inputs, ["top_client_revenue", "monthly_revenue"])
+        cc = None
+        if not missing_cc:
+            if v_cc["monthly_revenue"] <= 0:
+                missing_cc = ["monthly_revenue must be > 0"]
+            else:
+                cc = (v_cc["top_client_revenue"] / v_cc["monthly_revenue"]) * 100
+        industry_metrics["ind_client_concentration"] = _metric(
+            "svc_client_concentration", cc, missing_cc, "svc_client_concentration"
+        )
+
+    elif business_type in ("freelancer", "professional_practice"):
+        # Expense ratio
+        missing_er, v_er = _required(inputs, ["monthly_opex", "monthly_revenue"])
+        er = None
+        if not missing_er:
+            if v_er["monthly_revenue"] <= 0:
+                missing_er = ["monthly_revenue must be > 0"]
+            else:
+                er = (v_er["monthly_opex"] / v_er["monthly_revenue"]) * 100
+        industry_metrics["ind_expense_ratio"] = _metric(
+            "fp_expense_ratio", er, missing_er, "fp_expense_ratio"
+        )
+
+        # Effective hourly rate
+        missing_ehr, v_ehr = _required(inputs, ["monthly_revenue", "billable_hours"])
+        ehr = None
+        if not missing_ehr:
+            if v_ehr["billable_hours"] <= 0:
+                missing_ehr = ["billable_hours must be > 0"]
+            else:
+                ehr = v_ehr["monthly_revenue"] / v_ehr["billable_hours"]
+        industry_metrics["ind_effective_hourly_rate"] = _metric(
+            "ind_effective_hourly_rate", ehr, missing_ehr
+        )
+
     return {
         "source": inputs.get("source", "manual"),
+        "business_type": business_type,
         "normalized_inputs_used": {k: v for k, v in inputs.items() if k != "bank_csv"},
         "metrics": metrics,
+        "industry_metrics": industry_metrics,
     }
 
 
