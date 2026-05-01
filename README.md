@@ -28,16 +28,7 @@ This tool turns your raw bank statement (or Stripe/QBO export) into a structured
 
 ## Setup & Installation
 
-### Option 1: Automated Installation (Claude Desktop, Cursor, Windsurf)
-
-If you have Node.js installed on your computer, you can use the Smithery CLI to automatically inject the configuration for you:
-
-```bash
-npx -y @smithery/cli install @MayankTalwar0/startup-finance-metrics --client claude
-```
-*(Note: You can change `--client claude` to `--client cursor` or `--client windsurf` depending on your app).*
-
-### Option 2: Claude Desktop (Manual Installation for Non-Developers)
+### Option 1: Claude Desktop (Manual Installation for Non-Developers)
 
 Since this tool runs entirely on your own machine to protect your financial data, it requires a one-time manual setup. 
 **Good News:** You do **NOT** need to have Python installed! The tool we use below (`uv`) will automatically download everything it needs invisibly in the background.
@@ -62,8 +53,6 @@ Replace the contents of that file with the following code (if you already have o
     "startup-finance-metrics": {
       "command": "uvx",
       "args": [
-        "--from",
-        "git+https://github.com/MayankTalwar0/startup-finance-metrics.git",
         "startup-finance-mcp"
       ]
     }
@@ -74,21 +63,21 @@ Replace the contents of that file with the following code (if you already have o
 **Step 4: Restart Claude**
 Save the file, close it, and completely restart Claude Desktop. You will now see a new "hammer" (Tools) icon in your Claude chats!
 
-### Option 3: Claude Code, Glama, or Custom Cursor setup
+### Option 2: Claude Code, Glama, or Custom Cursor setup
 
 For CLI agents like Claude Code, or if you prefer to manually configure Glama and Cursor, use the `uvx` command:
 
 **For Claude Code:**
 ```bash
-claude mcp add startup-finance -- uvx --from git+https://github.com/MayankTalwar0/startup-finance-metrics.git startup-finance-mcp
+claude mcp add startup-finance -- uvx startup-finance-mcp
 ```
 
 **For Glama / Cursor (Custom MCP config):**
 ```bash
-uvx --from git+https://github.com/MayankTalwar0/startup-finance-metrics.git startup-finance-mcp
+uvx startup-finance-mcp
 ```
 
-### Option 4: Local Development
+### Option 3: Local Development
 
 ```bash
 git clone https://github.com/MayankTalwar0/startup-finance-metrics.git
