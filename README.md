@@ -1,4 +1,4 @@
-# startup-financial-analyst
+# startup-finance-metrics
 
 Financial health analysis for startups and small businesses.
 
