@@ -1,5 +1,5 @@
 {
-  "name": "startup-finance-metrics",
+  "name": "io.github.mayanktalwar0/startup-finance-metrics",
   "description": "An MCP server for analyzing startup financial health and generating metrics reports locally.",
   "transport": "stdio",
   "command": "uvx",
