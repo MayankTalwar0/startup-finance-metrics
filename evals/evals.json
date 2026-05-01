@@ -1,0 +1,23 @@
+{
+  "skill_name": "startup-financial-analyst",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Business type is services. Here is one month: cash 180000, revenue 95000, opex 78000, cogs 12000, previous month revenue 90000. Give me health metrics.",
+      "expected_output": "Common metrics computed and SaaS-only metrics marked insufficient_data with missing_inputs.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Business type is SaaS. Cash 1200000, revenue 60000, opex 180000, cogs 15000, prev month revenue 52000, S&M 40000, new customers 8, active customers 120, lost customers 3, starting_mrr 58000, churned_mrr 1500, expansion_mrr 2400, contraction_mrr 300, arr_start 650000, arr_end 720000, revenue_growth_yoy_pct 140, operating_margin_pct -180.",
+      "expected_output": "All advanced metrics computed with labels and no invented values.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "I uploaded only a bank CSV from one month and did not provide business type.",
+      "expected_output": "Parser-derived common metrics + request for business type + insufficient_data for non-derivable advanced metrics.",
+      "files": ["one_month_bank.csv"]
+    }
+  ]
+}
