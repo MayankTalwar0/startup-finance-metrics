@@ -1,11 +1,23 @@
 {
-  "name": "io.github.mayanktalwar0/startup-finance-metrics",
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.MayankTalwar0/startup-finance-metrics",
+  "version": "1.1.0",
   "description": "An MCP server for analyzing startup financial health and generating metrics reports locally.",
-  "transport": "stdio",
-  "command": "uvx",
-  "args": [
-    "--from",
-    "git+https://github.com/MayankTalwar0/startup-finance-metrics.git",
-    "startup-finance-mcp"
+  "repository": {
+    "url": "https://github.com/MayankTalwar0/startup-finance-metrics",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "startup-finance-mcp",
+      "version": "1.1.0",
+      "runtimeHint": "uvx",
+      "runtimeArguments": [],
+      "packageArguments": [],
+      "transport": {
+        "type": "stdio"
+      }
+    }
   ]
 }
