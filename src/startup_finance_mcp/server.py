@@ -122,6 +122,8 @@ This saves BOTH:
 - `financial_report.html` — styled report, open in any browser
 - `financial_report.md` — plain-text fallback
 
+**Always pass an explicit `output_dir`** — either a path the user specified, or a sensible default like the user's Desktop (e.g., `C:\\Users\\<name>\\Desktop` on Windows, `~/Desktop` on macOS/Linux). Do NOT rely on the default `"."` — when running under Claude Desktop the working directory is the app's install folder, not somewhere the user can find. After saving, tell the user the absolute paths.
+
 Never produce per-month report files like `march_report.md`. One unified report only.
 
 Read `file://references/coaching_templates.md` for investor coaching advice based on metric labels.

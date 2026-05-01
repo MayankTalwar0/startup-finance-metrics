@@ -9,12 +9,19 @@ An MCP (Model Context Protocol) server for analyzing startup financial health an
 > - **Strictly Read-Only**: This server executes NO financial state changes. It is a strictly read-only mathematical engine.
 > - **Strictly Local Processing**: Safely integrates with Claude Desktop, Cursor, Glama, and other MCP clients while maintaining full data sovereignty over your sensitive financial inputs.
 
+## Why This Exists
+
+If you're a startup founder raising funds or preparing for a board meeting, investors will ask you for metrics like MRR, burn rate, gross margin, LTV:CAC, and runway — often on short notice. Most founders either don't track these consistently, or spend hours pulling numbers from bank statements and spreadsheets before every fundraise.
+
+This tool turns your raw bank statement (or Stripe/QBO export) into a structured financial metrics report in minutes, entirely on your own machine. No accountant required for a first pass. No sensitive data leaving your computer.
+
 ## What It Does
 
 1. **Ingests Data**: Accepts bank CSVs, Stripe export CSVs, QBO/Xero export CSVs, or pasted values. *(For best results, provide a minimum 3-month bank statement and active user stats. Sample files are available in the `test/` folder).*
-2. **Computes Key Metrics**: Calculates Net Burn, Runway, Gross Margin, CAC, LTV, Rule of 40, and more.
-3. **Strict Validation**: Returns `insufficient_data` with `missing_inputs` instead of hallucinating values.
-4. **Generates Reports**: Creates clean, formatted markdown and HTML summaries of the analysis.
+2. **AI Transaction Categorization**: The AI classifies each bank transaction into revenue, COGS, S&M, payroll, or G&A based on the description. **This step is AI-driven and can make mistakes** — e.g. misclassifying a contractor payment as payroll vs. COGS, or missing an ambiguous line item. Always review the categorizations before sharing results with investors.
+3. **Computes Key Metrics**: Calculates Net Burn, Runway, Gross Margin, CAC, LTV, Rule of 40, and more — across one or multiple months in a single comparative report.
+4. **Strict Validation**: Returns `insufficient_data` with `missing_inputs` instead of hallucinating values. If data is missing or ambiguous, the engine tells you what's needed rather than guessing.
+5. **Generates Reports**: Creates clean, formatted Markdown and HTML reports — one unified report covering all months supplied, with side-by-side period comparison.
 
 ## Setup & Installation
 
@@ -50,11 +57,11 @@ Replace the contents of that file with the following code (if you already have o
 {
   "mcpServers": {
     "startup-finance-metrics": {
-      "command": "uv",
+      "command": "uvx",
       "args": [
-        "tool",
-        "run",
-        "startup-finance-mcp@git+https://github.com/MayankTalwar0/startup-finance-metrics.git"
+        "--from",
+        "git+https://github.com/MayankTalwar0/startup-finance-metrics.git",
+        "startup-finance-mcp"
       ]
     }
   }
@@ -93,10 +100,8 @@ startup-finance-mcp
 
 This server provides the following tools to the MCP client:
 
-1. `computeFinancialMetrics(inputs_json: str)`: 
-   Computes startup financial metrics (runway, gross margin, cac, ltv, etc.) from raw data. Accepts a JSON string containing financial inputs or a raw `bank_csv` string.
-2. `generateFinancialReport(metrics_json: str, format: str)`: 
-   Renders a human-readable financial report based on the computed metrics. Format can be `markdown` (default) or `html`.
+1. `computeFinancialMetrics(inputs_json: str)`: Computes startup financial metrics (runway, gross margin, CAC, LTV, etc.) from structured inputs. Called once per month when analyzing multi-month data.
+2. `generateFinancialReport(metrics_json: str, output_dir: str)`: Renders a unified HTML + Markdown report. Accepts either a single-month payload or a multi-month `{"months": [...]}` payload — producing one comparative report across all periods supplied.
 
 ## Using as a Standalone AI Skill
 
@@ -107,7 +112,7 @@ If you don't want to use the full MCP server and just want a simple prompt to us
 | # | Metric | Formula | Required inputs |
 |---|---|---|---|
 | 1 | Net Burn | `monthly_opex - monthly_revenue` | `monthly_opex`, `monthly_revenue` |
-| 2 | Runway | `current_cash / net_burn` | `current_cash`, positive `net_burn` |
+| 2 | Runway | `current_cash / net_burn` | `current_cash`; requires `net_burn > 0` (else returns `not_applicable: business is cash flow positive`) |
 | 3 | Gross Margin | `(monthly_revenue - cogs) / monthly_revenue * 100` | `monthly_revenue`, `cogs` |
 | 4 | CAC | `sales_marketing_spend / new_customers` | `sales_marketing_spend`, `new_customers` |
 | 5 | LTV | `(ARPU * gross_margin) / logo_churn_rate` | `monthly_revenue`, `active_customers`, `lost_customers`, `cogs` |
