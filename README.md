@@ -23,6 +23,9 @@ This tool turns your raw bank statement (or Stripe/QBO export) into a structured
 4. **Strict Validation**: Returns `insufficient_data` with `missing_inputs` instead of hallucinating values. If data is missing or ambiguous, the engine tells you what's needed rather than guessing.
 5. **Generates Reports**: Creates clean, formatted Markdown and HTML reports — one unified report covering all months supplied, with side-by-side period comparison.
 
+---
+*mcp-name: io.github.MayankTalwar0/startup-finance-metrics*
+
 ## Setup & Installation
 
 ### Option 1: Automated Installation (Claude Desktop, Cursor, Windsurf)
