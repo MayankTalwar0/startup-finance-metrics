@@ -1,7 +1,0 @@
-startCommand:
-  type: stdio
-commandFunction:
-  |- (config) => ({
-    command: 'uvx',
-    args: ['--from', 'git+https://github.com/MayankTalwar0/startup-finance-metrics.git', 'startup-finance-mcp']
-  })
